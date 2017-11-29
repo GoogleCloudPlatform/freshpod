@@ -37,16 +37,19 @@ func kubernetesClient() (*kubernetes.Clientset, error) {
 	var err error
 	if isInCluster() {
 		config, err = rest.InClusterConfig()
-		return nil, errors.Wrap(err, "failed to load in-cluster config")
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load in-cluster config")
+		}
+	} else {
+		loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+		kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules,
+			&clientcmd.ConfigOverrides{})
+		config, err = kubeConfig.ClientConfig()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load the kube config")
+		}
 	}
 
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules,
-		&clientcmd.ConfigOverrides{})
-	config, err = kubeConfig.ClientConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to load the kube config")
-	}
 	clients, err := kubernetes.NewForConfig(config)
 	return clients, errors.Wrap(err, "cannot initialize a kubernetes client with loaded configuration")
 }
