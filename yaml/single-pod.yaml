@@ -8,7 +8,7 @@ metadata:
 spec:
   containers:
   - name: killa
-    image: killa
+    image: gcr.io/ahmetb-public/killa:a8e0747
     imagePullPolicy: IfNotPresent
     volumeMounts:
     - name: docker
