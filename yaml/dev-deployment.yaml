@@ -1,0 +1,31 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: killa
+  namespace: kube-system
+  labels:
+    app: killa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: killa
+  template:
+    metadata:
+      labels:
+        app: killa
+    spec:
+      containers:
+      - name: killa
+        image: gcr.io/ahmetb-public/killa:007517a
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: docker
+          mountPath: /var/run/docker.sock
+      volumes:
+      - name: docker
+        hostPath:
+          type: Socket
+          path: /var/run/docker.sock
+      terminationGracePeriodSeconds: 1
+      restartPolicy: Always
