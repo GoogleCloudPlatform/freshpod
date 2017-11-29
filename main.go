@@ -67,7 +67,7 @@ func main() {
 	}
 	dv, err := d.ServerVersion(ctx)
 	if err != nil {
-		log.Fatal("failed to connect to docker api")
+		log.Fatal(errors.Wrap(err, "failed to connect to docker api"))
 	}
 	log.Printf("connected docker api (api: v%s, version: %s)", dv.APIVersion, dv.Version)
 
