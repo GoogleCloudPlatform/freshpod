@@ -1,4 +1,4 @@
-# <name-tbd>
+# `<name-tbd>`
 
 This tool automatically restarts Pods when the image they use is rebuilt or
 updated.
