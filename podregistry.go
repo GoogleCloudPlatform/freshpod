@@ -13,5 +13,66 @@
 // limitations under the License.
 package main
 
+import "sync"
+
+type pod struct{ name, namespace string }
+
 type podRegistry struct {
+	mu       sync.RWMutex
+	imgToPod map[string]map[pod]struct{}
+	podToImg map[pod]map[string]struct{}
+}
+
+func newRegistry() *podRegistry {
+	return &podRegistry{
+		imgToPod: make(map[string]map[pod]struct{}),
+		podToImg: make(map[pod]map[string]struct{}),
+	}
+}
+
+// add registers that pod uses the specified image. It can be called multiple
+// times with different image values to register images of multiple containers
+// of the same pod.
+func (r *podRegistry) add(p pod, image string) {
+	r.mu.Lock()
+
+	if _, ok := r.imgToPod[image]; !ok {
+		r.imgToPod[image] = make(map[pod]struct{})
+	}
+
+	r.imgToPod[image][p] = struct{}{}
+	if _, ok := r.podToImg[p]; !ok {
+		r.podToImg[p] = make(map[string]struct{})
+	}
+	r.podToImg[p][image] = struct{}{}
+	r.mu.Unlock()
+}
+
+// del unregisters that the pod is using the specified image. It can be multiple
+// times with different images to unregister images of multiple containers of
+// the same pod.
+func (r *podRegistry) del(p pod, image string) {
+	r.mu.Lock()
+	delete(r.imgToPod[image], p)
+	if len(r.imgToPod[image]) == 0 {
+		delete(r.imgToPod, image)
+	}
+	delete(r.podToImg[p], image)
+	if len(r.podToImg[p]) == 0 {
+		delete(r.podToImg, p)
+	}
+	r.mu.Unlock()
+}
+
+// get retrieves list of pods running the image.
+func (r *podRegistry) get(image string) []pod {
+	r.mu.RLock()
+	out := make([]pod, len(r.imgToPod[image]))
+	var i int
+	for p := range r.imgToPod[image] {
+		out[i] = p
+		i++
+	}
+	r.mu.RUnlock()
+	return out
 }

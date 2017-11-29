@@ -15,9 +15,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -31,13 +33,12 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const (
-	dockerSock = "/var/run/docker.sock"
+var (
+	podMap = newRegistry() // TODO(ahmetb) globals hurt
 )
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
-	os.Setenv("DOCKER_HOST", "unix://"+dockerSock)
 
 	go func() {
 		signalChan := make(chan os.Signal, 1)
@@ -77,11 +78,20 @@ func main() {
 	for {
 		select {
 		case err := <-errCh:
-			panic(err) // TODO(ahmetb) handle gracefully
+			select {
+			case <-ctx.Done():
+				log.Println("Received cancellation.")
+				os.Exit(0)
+			default:
+				panic(err) // TODO(ahmetb) handle gracefully
+			}
+
 		case e := <-ch:
+			// tag will be in format IMAGE:TAG or IMAGE:latest as it comes
+			// from the Docker API (v1.32 at the time of writing).
 			tag := e.Actor.Attributes["name"]
 			go func() {
-				if err := handleTag(tag); err != nil {
+				if err := handleTag(k8s, tag); err != nil {
 					log.Println(err)
 				}
 			}()
@@ -101,43 +111,66 @@ func podWatchController(k8s *kubernetes.Clientset) cache.Controller {
 			AddFunc: func(obj interface{}) {
 				pod, ok := obj.(*corev1.Pod)
 				if !ok {
-					log.Fatalf("list/watch returned non-pod object: %T", pod)
+					log.Fatalf("list/watch returned non-pod object: %T", obj)
 				}
-				if err := trackPod(pod); err != nil {
-					// TODO(ahmetb) if workqueue used here maybe we can
-					// requeue somehow.
-					log.Println(errors.Wrap(err, "could not track pod"))
-				}
+				go trackPod(pod)
 			},
 			DeleteFunc: func(obj interface{}) {
 				pod, ok := obj.(*corev1.Pod)
 				if !ok {
-					log.Fatalf("list/watch returned non-pod object: %T", pod)
+					log.Fatalf("list/watch returned non-pod object: %T", obj)
 				}
-				if err := untrackPod(pod); err != nil {
-					// TODO(ahmetb) if workqueue used here maybe we can
-					// requeue somehow.
-					log.Println(errors.Wrap(err, "could not untrack pod"))
-				}
+				go untrackPod(pod)
 			},
 		},
 	)
 	return controller
 }
 
-func handleTag(tag string) error {
-	// TODO(ahmetb) implement
+func handleTag(k8s *kubernetes.Clientset, tag string) error {
+	log.Printf("[TAG] %q", tag)
+	pods := podMap.get(tag)
+	for _, p := range pods {
+		log.Printf("[DELETE] pod: %s/%s", p.namespace, p.name)
+		if err := k8s.CoreV1().Pods(p.namespace).Delete(p.name, nil); err != nil {
+			return errors.Wrap(err, "failed to delete pod")
+		}
+
+		// TODO(ahmetb) termination seems to be taking 45 seconds even though
+		// terminationGracePeriodSeconds=30. So calling podRegistry here
+		// directly to terminate excessive API calls to delete the pod that's
+		// already being terminated.
+		podMap.del(p, tag)
+	}
 	return nil
 }
 
-func trackPod(pod *corev1.Pod) error {
+func trackPod(p *corev1.Pod) {
 	// TODO(ahmetb) implement
-	log.Printf("handling pod %s", pod.GetName())
-	return nil
+	log.Printf("[TRACK] pod %s/%s", p.GetNamespace(), p.GetName())
+	for _, c := range p.Spec.Containers {
+		podMap.add(pod{
+			namespace: p.Namespace,
+			name:      p.Name}, canonicalImage(c.Image))
+	}
 }
 
-func untrackPod(pod *corev1.Pod) error {
+func untrackPod(p *corev1.Pod) {
 	// TODO(ahmetb) implement
-	log.Printf("forgetting pod %s", pod.GetName())
-	return nil
+	log.Printf("[UNTRACK] pod %s/%s", p.GetNamespace(), p.GetName())
+	for _, c := range p.Spec.Containers {
+		podMap.del(pod{
+			namespace: p.Namespace,
+			name:      p.Name}, canonicalImage(c.Image))
+	}
+}
+
+// canonicalImage adds :latest to the image tags so
+func canonicalImage(img string) string {
+	if !strings.Contains(img, ":") {
+		// TODO(ahmetb) find better ways to add :latest. currently this detection
+		// covers both "IMAGE:TAG" format and "IMAGE@sha256:DIGEST" formats.
+		return fmt.Sprintf("%s:latest", img)
+	}
+	return img
 }
