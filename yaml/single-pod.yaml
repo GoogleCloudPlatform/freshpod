@@ -8,8 +8,9 @@ metadata:
 spec:
   containers:
   - name: killa
-    image: gcr.io/ahmetb-public/killa:a8e0747
+    image: gcr.io/ahmetb-public/killa:007517a
     imagePullPolicy: IfNotPresent
+    restartPolicy: Always
     volumeMounts:
     - name: docker
       mountPath: /var/run/docker.sock
@@ -17,5 +18,5 @@ spec:
   - name: docker
     hostPath:
       type: Socket
-      path: "/var/run/docker.sock"
+      path: /var/run/docker.sock
   terminationGracePeriodSeconds: 1
