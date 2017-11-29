@@ -10,7 +10,6 @@ spec:
   - name: killa
     image: gcr.io/ahmetb-public/killa:007517a
     imagePullPolicy: IfNotPresent
-    restartPolicy: Always
     volumeMounts:
     - name: docker
       mountPath: /var/run/docker.sock
@@ -20,3 +19,4 @@ spec:
       type: Socket
       path: /var/run/docker.sock
   terminationGracePeriodSeconds: 1
+  restartPolicy: Always
