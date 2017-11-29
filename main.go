@@ -43,7 +43,8 @@ func main() {
 	go func() {
 		signalChan := make(chan os.Signal, 1)
 		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-		<-signalChan
+		sig := <-signalChan
+		log.Printf("received signal: %s", sig.String())
 		cancel()
 	}()
 
@@ -80,7 +81,7 @@ func main() {
 		case err := <-errCh:
 			select {
 			case <-ctx.Done():
-				log.Println("Received cancellation.")
+				log.Println("stopping event listener due to cancellation")
 				os.Exit(0)
 			default:
 				panic(err) // TODO(ahmetb) handle gracefully
@@ -128,10 +129,10 @@ func podWatchController(k8s *kubernetes.Clientset) cache.Controller {
 }
 
 func handleTag(k8s *kubernetes.Clientset, tag string) error {
-	log.Printf("[TAG] %q", tag)
+	log.Printf("[image_tagged] %q", tag)
 	pods := podMap.get(tag)
 	for _, p := range pods {
-		log.Printf("[DELETE] pod: %s/%s", p.namespace, p.name)
+		log.Printf("[delete_pod] %s/%s", p.namespace, p.name)
 		if err := k8s.CoreV1().Pods(p.namespace).Delete(p.name, nil); err != nil {
 			return errors.Wrap(err, "failed to delete pod")
 		}
@@ -147,7 +148,7 @@ func handleTag(k8s *kubernetes.Clientset, tag string) error {
 
 func trackPod(p *corev1.Pod) {
 	// TODO(ahmetb) implement
-	log.Printf("[TRACK] pod %s/%s", p.GetNamespace(), p.GetName())
+	log.Printf("[track_pod] %s/%s", p.GetNamespace(), p.GetName())
 	for _, c := range p.Spec.Containers {
 		podMap.add(pod{
 			namespace: p.Namespace,
@@ -156,8 +157,7 @@ func trackPod(p *corev1.Pod) {
 }
 
 func untrackPod(p *corev1.Pod) {
-	// TODO(ahmetb) implement
-	log.Printf("[UNTRACK] pod %s/%s", p.GetNamespace(), p.GetName())
+	log.Printf("[untrack_pod] %s/%s", p.GetNamespace(), p.GetName())
 	for _, c := range p.Spec.Containers {
 		podMap.del(pod{
 			namespace: p.Namespace,
