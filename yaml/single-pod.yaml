@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: killa
+  namespace: kube-system
+  labels:
+    app: killa
+spec:
+  containers:
+  - name: killa
+    image: killa
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - name: docker
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: docker
+    hostPath:
+      type: Socket
+      path: "/var/run/docker.sock"
+  terminationGracePeriodSeconds: 1
