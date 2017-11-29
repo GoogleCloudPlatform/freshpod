@@ -6,37 +6,41 @@ updated.
 It's especially useful for [Minikube] and it can be deployed to Minikube as a
 Pod.
 
+It works by listening to docker-engine image tag events and killing the Pods
+running with the image. Make sure to use a high-level workload controller
+(such as [Deployment])
+
 [Minikube]: https://github.com/kubernetes/minikube
+[Deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 
-## Installing
+## Try it out
 
-Currently you can only build from the source code:
+Deploy to your Minikube cluster with [provided manifest file](yaml/test-deployment.yaml):
 
 ```sh
 minikube start
-eval $(minikube docker-env) .
-docker build -t killa .
-kubectl apply -f ./yaml/single-pod.yaml
+kubectl apply -f ./yaml/test-deployment.yaml
 ```
 
-It should be running:
+Check the Pod is running:
 
 ```
 $ kubectl get pods -n kube-system
 NAME                          READY     STATUS    RESTARTS   AGE
-killa                         1/1       Running   0          20s
+killa-5cbb9955cb-tcvmb        1/1       Running   0          20s
 ```
 
+Verify it connected to Docker and Kubernetes APIs.
 ```
-$ kubectl logs -n kube-system -f killa
+$ kubectl logs -n kube-system killa-5cbb9955cb-tcvmb
 2017/11/29 22:33:26 connected kubernetes apiserver (v1.8.0)
 2017/11/29 22:33:26 connected docker api (api: v1.30, version: 17.06.0-ce)
 2017/11/29 22:33:26 [TRACK] pod default/hello-5766f88f9c-d5rqf
-2017/11/29 22:33:26 [TRACK] pod doctor/nginx-7cbc4b4d9c-kh244
 2017/11/29 22:33:26 [TRACK] pod default/hello-5766f88f9c-67lgz
+...
 ```
 
-## See in action
+## See it in action
 
 Get some test images:
 
