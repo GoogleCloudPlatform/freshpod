@@ -66,6 +66,7 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "cannot create docker client"))
 	}
+	d.NegotiateAPIVersion(ctx)
 	dv, err := d.ServerVersion(ctx)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to connect to docker api"))
