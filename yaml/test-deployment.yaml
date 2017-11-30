@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: killa
-        image: gcr.io/ahmetb-public/killa:35870fd
+        image: gcr.io/ahmetb-public/killa:200fb6a
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: docker
