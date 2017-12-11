@@ -1,23 +1,26 @@
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: freshpod
+  name: freshpod-dev
   namespace: kube-system
   labels:
-    app: freshpod
+    k8s-app: freshpod
+    tier: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: freshpod
+      k8s-app: freshpod
+      tier: dev
   template:
     metadata:
       labels:
-        app: freshpod
+        k8s-app: freshpod
+        tier: dev
     spec:
       containers:
       - name: freshpod
-        image: gcr.io/ahmetb-public/freshpod:200fb6a
+        image: freshpod:latest
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: docker

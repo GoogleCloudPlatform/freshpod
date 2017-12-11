@@ -4,20 +4,23 @@ metadata:
   name: freshpod
   namespace: kube-system
   labels:
-    app: freshpod
+    k8s-app: freshpod
+    tier: prod
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: freshpod
+      k8s-app: freshpod
+      tier: prod
   template:
     metadata:
       labels:
-        app: freshpod
+        k8s-app: freshpod
+        tier: prod
     spec:
       containers:
       - name: freshpod
-        image: freshpod:latest
+        image: gcr.io/ahmetb-public/freshpod:200fb6a
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: docker

@@ -1,6 +1,6 @@
-# `podfresh`
+# `freshpod`
 
-podfresh automatically restarts Pods when the image they use is rebuilt or
+freshpod automatically restarts [Pods] when the image they use is rebuilt or
 updated. It’s suitable for single-instance Kubernetes clusters, such as
 [Minikube].
 
@@ -10,15 +10,16 @@ new ones. Therefore you should use a high-level controller such as [Deployment],
 and not use Pods directly in your manifests.
 
 [Minikube]: https://github.com/kubernetes/minikube
+[Pods]: https://kubernetes.io/docs/concepts/workloads/pods/pod/
 [Deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 
 ## Try it out
 
-Deploy to your Minikube cluster with [provided manifest file](yaml/test-deployment.yaml):
+Deploy to your Minikube cluster with [provided manifest file](yaml/install/deployment.yaml):
 
 ```sh
 minikube start
-kubectl apply -f ./yaml/test-deployment.yaml
+kubectl apply -Rf ./yaml/install
 ```
 
 Check the Pod is running:
