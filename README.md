@@ -1,14 +1,13 @@
-# `<name-tbd>`
+# `podfresh`
 
-This tool automatically restarts Pods when the image they use is rebuilt or
-updated.
+podfresh automatically restarts Pods when the image they use is rebuilt or
+updated. It’s suitable for single-instance Kubernetes clusters, such as
+[Minikube].
 
-It's especially useful for [Minikube] and it can be deployed to Minikube as a
-Pod.
-
-It works by listening to docker-engine image tag events and killing the Pods
-running with the image. Make sure to use a high-level workload controller
-(such as [Deployment])
+It works by listening to docker-engine image tag events, and deletes the Pods
+running an updated image. It assumes that the deleted Pods will be replaced with
+new ones. Therefore you should use a high-level controller such as [Deployment],
+and not use Pods directly in your manifests.
 
 [Minikube]: https://github.com/kubernetes/minikube
 [Deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
