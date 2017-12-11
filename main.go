@@ -15,11 +15,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -30,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
+
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -73,7 +72,10 @@ func main() {
 	}
 	log.Printf("connected docker api (api: v%s, version: %s)", dv.APIVersion, dv.Version)
 
-	podWatcher := podWatchController(k8s)
+	podHandler := &podDeletionHandler{pods: newRegistry()}
+	tagCh := podHandler.Start(ctx, k8s.CoreV1())
+
+	podWatcher := podWatchController(k8s, podHandler)
 	go podWatcher.Run(ctx.Done())
 
 	ch, errCh := d.Events(ctx, types.EventsOptions{Filters: tagEvent})
@@ -92,18 +94,14 @@ func main() {
 			// tag will be in format IMAGE:TAG or IMAGE:latest as it comes
 			// from the Docker API (v1.32 at the time of writing).
 			tag := e.Actor.Attributes["name"]
-			go func() {
-				if err := handleTag(k8s, tag); err != nil {
-					log.Println(err)
-				}
-			}()
+			tagCh <- tag
 		case <-ctx.Done():
 			break
 		}
 	}
 }
 
-func podWatchController(k8s *kubernetes.Clientset) cache.Controller {
+func podWatchController(k8s *kubernetes.Clientset, pods *podDeletionHandler) cache.Controller {
 	restClient := k8s.CoreV1().RESTClient()
 	lw := cache.NewListWatchFromClient(restClient, "pods", corev1.NamespaceAll, fields.Everything())
 	_, controller := cache.NewInformer(lw,
@@ -115,63 +113,16 @@ func podWatchController(k8s *kubernetes.Clientset) cache.Controller {
 				if !ok {
 					log.Fatalf("list/watch returned non-pod object: %T", obj)
 				}
-				go trackPod(pod)
+				pods.Track(pod)
 			},
 			DeleteFunc: func(obj interface{}) {
 				pod, ok := obj.(*corev1.Pod)
 				if !ok {
 					log.Fatalf("list/watch returned non-pod object: %T", obj)
 				}
-				go untrackPod(pod)
+				pods.Untrack(pod)
 			},
 		},
 	)
 	return controller
-}
-
-func handleTag(k8s *kubernetes.Clientset, tag string) error {
-	log.Printf("[image_tagged] %q", tag)
-	pods := podMap.get(tag)
-	for _, p := range pods {
-		log.Printf("[delete_pod] %s/%s", p.namespace, p.name)
-		if err := k8s.CoreV1().Pods(p.namespace).Delete(p.name, nil); err != nil {
-			return errors.Wrap(err, "failed to delete pod")
-		}
-
-		// TODO(ahmetb) termination seems to be taking 45 seconds even though
-		// terminationGracePeriodSeconds=30. So calling podRegistry here
-		// directly to terminate excessive API calls to delete the pod that's
-		// already being terminated.
-		podMap.del(p, tag)
-	}
-	return nil
-}
-
-func trackPod(p *corev1.Pod) {
-	// TODO(ahmetb) implement
-	log.Printf("[track_pod] %s/%s", p.GetNamespace(), p.GetName())
-	for _, c := range p.Spec.Containers {
-		podMap.add(pod{
-			namespace: p.Namespace,
-			name:      p.Name}, canonicalImage(c.Image))
-	}
-}
-
-func untrackPod(p *corev1.Pod) {
-	log.Printf("[untrack_pod] %s/%s", p.GetNamespace(), p.GetName())
-	for _, c := range p.Spec.Containers {
-		podMap.del(pod{
-			namespace: p.Namespace,
-			name:      p.Name}, canonicalImage(c.Image))
-	}
-}
-
-// canonicalImage adds :latest to the image tags so
-func canonicalImage(img string) string {
-	if !strings.Contains(img, ":") {
-		// TODO(ahmetb) find better ways to add :latest. currently this detection
-		// covers both "IMAGE:TAG" format and "IMAGE@sha256:DIGEST" formats.
-		return fmt.Sprintf("%s:latest", img)
-	}
-	return img
 }

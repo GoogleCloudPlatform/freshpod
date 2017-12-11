@@ -1,23 +1,23 @@
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: killa
+  name: freshpod
   namespace: kube-system
   labels:
-    app: killa
+    app: freshpod
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: killa
+      app: freshpod
   template:
     metadata:
       labels:
-        app: killa
+        app: freshpod
     spec:
       containers:
-      - name: killa
-        image: killa:latest
+      - name: freshpod
+        image: freshpod:latest
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: docker
@@ -28,4 +28,3 @@ spec:
           type: Socket
           path: /var/run/docker.sock
       terminationGracePeriodSeconds: 1
-      restartPolicy: Always

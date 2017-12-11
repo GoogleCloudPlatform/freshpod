@@ -26,12 +26,12 @@ Check the Pod is running:
 ```
 $ kubectl get pods -n kube-system
 NAME                          READY     STATUS    RESTARTS   AGE
-killa-5cbb9955cb-tcvmb        1/1       Running   0          20s
+freshpod-5cbb9955cb-tcvmb     1/1       Running   0          20s
 ```
 
 Verify it connected to Docker and Kubernetes APIs.
 ```
-$ kubectl logs -n kube-system killa-5cbb9955cb-tcvmb
+$ kubectl logs -n kube-system freshpod-5cbb9955cb-tcvmb
 2017/11/29 22:33:26 connected kubernetes apiserver (v1.8.0)
 2017/11/29 22:33:26 connected docker api (api: v1.30, version: 17.06.0-ce)
 2017/11/29 22:33:26 [TRACK] pod default/hello-5766f88f9c-d5rqf

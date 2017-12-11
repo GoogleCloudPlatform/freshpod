@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/ahmetb/serial-killa",
+	"ImportPath": "github.com/ahmetb/freshpod",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Deps": [
