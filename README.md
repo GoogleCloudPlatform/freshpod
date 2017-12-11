@@ -42,20 +42,20 @@ $ kubectl logs -n kube-system freshpod-5cbb9955cb-tcvmb
 
 ## See it in action
 
-Get some test images:
+Get some test images and tag `1.0` image as `hello:latest`:
 
 ```
 eval $(minikube docker-env)
 docker pull gcr.io/google-samples/hello-app:1.0
 docker pull gcr.io/google-samples/hello-app:2.0
-docker tag  gcr.io/google-samples/hello-app:1.0 hello
+docker tag  gcr.io/google-samples/hello-app:1.0 hello:latest
 ```
 
-Run a 2-replica Deployment and NodePort Service with `hello` image:
+Run a 2-replica Deployment and NodePort Service with `hello:latest` image:
 
 ```
-kubectl run hello --image=gcr.io/google-samples/hello-app:1.0 \
-  --replicas=2 --port 8080
+kubectl run hello --image=hello --port 8080 --replicas=2 \
+  --image-pull-policy=IfNotPresent
 
 kubectl expose deploy/hello --type=NodePort
 ```
@@ -70,7 +70,7 @@ Version: 1.0.0
 Hostname: hello-5766f88f9c-67lgz
 ```
 
-Re-tag the `hello` image with `2.0`:
+Re-tag the `hello:latest` image with the `2.0` version:
 
 ```
 docker tag gcr.io/google-samples/hello-app:2.0 hello

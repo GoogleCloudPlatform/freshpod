@@ -32,10 +32,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-var (
-	podMap = newRegistry() // TODO(ahmetb) globals hurt
-)
-
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 

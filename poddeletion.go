@@ -37,27 +37,33 @@ type podDeletionHandler struct {
 func (h *podDeletionHandler) Start(ctx context.Context, k8s corev1typed.CoreV1Interface) chan<- string {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+
 	if h.tagCh != nil {
 		panic("pod deletion handler is already started")
 	}
 	h.tagCh = make(chan string)
 
 	go func() {
-		select {
-		case <-ctx.Done():
-			break
-		case tag := <-h.tagCh:
-			log.Printf("[image_tagged] %q", tag)
-			go h.deletePods(k8s, tag)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case tag := <-h.tagCh:
+				log.Printf("[image_tagged] %q", tag)
+				go h.deletePods(k8s, tag)
+			}
 		}
 	}()
-
 	return h.tagCh
 }
 
 // deletePods deletes pods running the specified tag serially.
 func (h *podDeletionHandler) deletePods(k8s corev1typed.CoreV1Interface, tag string) {
-	pods := podMap.get(tag)
+	pods := h.pods.get(tag)
+	if len(pods) == 0 {
+		log.Printf("[noop] no pods registered with image=%s", tag)
+		return
+	}
 	for _, p := range pods {
 		log.Printf("[deleting_pod] %s/%s", p.namespace, p.name)
 		if err := k8s.Pods(p.namespace).Delete(p.name, nil); err != nil {
