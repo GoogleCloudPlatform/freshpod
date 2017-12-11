@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: freshpod
-        image: gcr.io/ahmetb-public/freshpod:59fadaf
+        image: gcr.io/ahmetb-public/freshpod:e12d40c
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: docker
