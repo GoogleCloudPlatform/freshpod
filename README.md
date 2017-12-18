@@ -4,6 +4,8 @@ freshpod automatically restarts [Pods] when the image they use is rebuilt or
 updated. It’s suitable for single-instance Kubernetes clusters, such as
 [Minikube].
 
+[![A command line demo of freshpod replacing pods when the image is updated](img/freshpod-demo.gif)](https://asciinema.org/a/dD9UhCIaPw13znirhmGUnNJtd)
+
 It works by listening to docker-engine image tag events, and deletes the Pods
 running an updated image. It assumes that the deleted Pods will be replaced with
 new ones. Therefore you should use a high-level controller such as [Deployment],
