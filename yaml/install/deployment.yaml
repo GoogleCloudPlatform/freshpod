@@ -19,8 +19,6 @@ metadata:
   labels:
     k8s-app: freshpod
     tier: prod
-    kubernetes.io/minikube-addons: freshpod
-    addonmanager.kubernetes.io/mode: Reconcile
 spec:
   replicas: 1
   selector:
