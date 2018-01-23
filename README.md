@@ -1,53 +1,43 @@
-# `freshpod`
+# freshpod
 
-freshpod automatically restarts [Pods] when the image they use is rebuilt or
-updated. It’s suitable for single-instance Kubernetes clusters, such as
-[Minikube].
+freshpod helps you automatically reload containers when their image is updated
+on single-instance Kubernetes clusters, such as [Minikube] or [Docker for
+Windows/Mac][dfm].
 
-[![A command line demo of freshpod replacing pods when the image is updated](img/freshpod-demo.gif)](https://asciinema.org/a/dD9UhCIaPw13znirhmGUnNJtd)
+freshpod detects you rebuilt an image and it deletes the Kubernetes Pods are
+running that image. This way, your workload controller (such as [Deployment])
+will create new Pods running the new image!
 
-It works by listening to docker-engine image tag events, and deletes the Pods
-running an updated image. It assumes that the deleted Pods will be replaced with
-new ones. Therefore you should use a high-level controller such as [Deployment],
-and not use Pods directly in your manifests.
 
 [Minikube]: https://github.com/kubernetes/minikube
+[dfm]: https://docs.docker.com/docker-for-mac/kubernetes/
 [Pods]: https://kubernetes.io/docs/concepts/workloads/pods/pod/
 [Deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 
-## Try it out
+## Demo
 
-Deploy to your Minikube cluster with [provided manifest file](yaml/install/deployment.yaml):
+[![A command line demo of freshpod replacing pods when the image is updated](img/freshpod-demo.gif)](https://asciinema.org/a/dD9UhCIaPw13znirhmGUnNJtd)
+
+## Install on Minikube
+
+freshpod is a supported add-on for Minikube:
+
+    minikube addons enable freshpod
+
+## Install on “Docker for Mac/Windows”
+
+If you’re using [Kubernertes on Docker for Mac/Windows][dfm], you can directly
+apply [the manifest](https://github.com/kubernetes/minikube/blob/master/deploy/addons/freshpod/freshpod-rc.yaml)
+used by Minikube:
+
+    kubectl apply -f https://github.com/kubernetes/minikube/blob/ec1b443722227428bd2b23967e1b48d94350a5ac/deploy/addons/freshpod/freshpod-rc.yaml
+
+## Try it out!
+
+Get some test images and tag the `:1.0` image as `hello:latest`:
 
 ```sh
-minikube start
-kubectl apply -Rf ./yaml/install
-```
-
-Check the Pod is running:
-
-```
-$ kubectl get pods -n kube-system
-NAME                          READY     STATUS    RESTARTS   AGE
-freshpod-5cbb9955cb-tcvmb     1/1       Running   0          20s
-```
-
-Verify it connected to Docker and Kubernetes APIs.
-```
-$ kubectl logs -n kube-system freshpod-5cbb9955cb-tcvmb
-2017/11/29 22:33:26 connected kubernetes apiserver (v1.8.0)
-2017/11/29 22:33:26 connected docker api (api: v1.30, version: 17.06.0-ce)
-2017/11/29 22:33:26 [TRACK] pod default/hello-5766f88f9c-d5rqf
-2017/11/29 22:33:26 [TRACK] pod default/hello-5766f88f9c-67lgz
-...
-```
-
-## See it in action
-
-Get some test images and tag `1.0` image as `hello:latest`:
-
-```
-eval $(minikube docker-env)
+eval $(minikube docker-env) # not necessary for docker-for-mac/windows
 docker pull gcr.io/google-samples/hello-app:1.0
 docker pull gcr.io/google-samples/hello-app:2.0
 docker tag  gcr.io/google-samples/hello-app:1.0 hello:latest
@@ -55,7 +45,7 @@ docker tag  gcr.io/google-samples/hello-app:1.0 hello:latest
 
 Run a 2-replica Deployment and NodePort Service with `hello:latest` image:
 
-```
+```sh
 kubectl run hello --image=hello --port 8080 --replicas=2 \
   --image-pull-policy=IfNotPresent
 
@@ -74,7 +64,7 @@ Hostname: hello-5766f88f9c-67lgz
 
 Re-tag the `hello:latest` image with the `2.0` version:
 
-```
+```sh
 docker tag gcr.io/google-samples/hello-app:2.0 hello
 ```
 
@@ -87,10 +77,10 @@ Version: 2.0.0
 Hostname: hello-5766f88f9c-h88df
 ```
 
+-----
+
 #### Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
-
------
 
 This is not an official Google product.
