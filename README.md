@@ -1,4 +1,4 @@
-# freshpod
+# freshpod [![](https://img.shields.io/badge/THANKS-md-ff69b4.svg)](THANKS.md)
 
 freshpod helps you automatically restart containers on Kubernetes when their image
 is updated.
