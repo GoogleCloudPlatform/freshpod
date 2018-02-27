@@ -1,13 +1,14 @@
 # freshpod
 
-freshpod helps you automatically reload containers when their image is updated
-on single-instance Kubernetes clusters, such as [Minikube] or [Docker for
-Windows/Mac][dfm].
+freshpod helps you automatically restart containers on Kubernetes when their image
+is updated.
+
+It is designed for single-instance Kubernetes clusters, such as [Minikube] or
+[Docker for Windows/Mac][dfm].
 
 freshpod detects you rebuilt an image and it deletes the Kubernetes Pods are
 running that image. This way, your workload controller (such as [Deployment])
-will create new Pods running the new image!
-
+will create new Pods running the new image.
 
 [Minikube]: https://github.com/kubernetes/minikube
 [dfm]: https://docs.docker.com/docker-for-mac/kubernetes/
@@ -16,11 +17,14 @@ will create new Pods running the new image!
 
 ## Demo
 
+This demo shows refactoring an application and running `docker build`
+will automatically restart the application with the new image on [Minikube]:
+
 [![A command line demo of freshpod replacing pods when the image is updated](img/freshpod-demo.gif)](https://asciinema.org/a/dD9UhCIaPw13znirhmGUnNJtd)
 
 ## Install on Minikube
 
-freshpod is a supported add-on for Minikube:
+freshpod is available as an add-on for [Minikube]. You just need to enable it:
 
     minikube addons enable freshpod
 
@@ -68,7 +72,7 @@ Re-tag the `hello:latest` image with the `2.0` version:
 docker tag gcr.io/google-samples/hello-app:2.0 hello
 ```
 
-Visit the app again (note the `2.0.0`):
+Visit the app again (note the version has changed to `2.0.0`):
 
 ```
 $ curl "$URL"
