@@ -34,7 +34,7 @@ If you’re using [Kubernertes on Docker for Mac/Windows][dfm], you can directly
 apply [the manifest](https://github.com/kubernetes/minikube/blob/master/deploy/addons/freshpod/freshpod-rc.yaml)
 used by Minikube:
 
-    kubectl apply -f https://github.com/kubernetes/minikube/blob/ec1b443722227428bd2b23967e1b48d94350a5ac/deploy/addons/freshpod/freshpod-rc.yaml
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/minikube/ec1b443722227428bd2b23967e1b48d94350a5ac/deploy/addons/freshpod/freshpod-rc.yaml
 
 ## Try it out!
 
