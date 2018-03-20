@@ -10,10 +10,14 @@ freshpod detects you rebuilt an image and it deletes the Kubernetes Pods are
 running that image. This way, your workload controller (such as [Deployment])
 will create new Pods running the new image.
 
+> :new: **Check out [Skaffold]**, a new tool by Google that simplifies local Kubernetes
+> development experience. Skaffold supersedes freshpod.
+
 [Minikube]: https://github.com/kubernetes/minikube
 [dfm]: https://docs.docker.com/docker-for-mac/kubernetes/
 [Pods]: https://kubernetes.io/docs/concepts/workloads/pods/pod/
 [Deployment]: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+[Skaffold]: https://github.com/GoogleCloudPlatform/skaffold
 
 ## Demo
 
